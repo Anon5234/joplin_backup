@@ -1,6 +1,9 @@
 #!/bin/bash
 
-# Define variables
+# Load the .env file
+source .env
+
+# Define backup variables
 BACKUP_DIR="/Users/garretmurray/JoplinBackup"
 JOPLIN_EXPORT_DIR="$BACKUP_DIR/joplin_export"
 PROTON_DRIVE_DIR="/Users/garretmurray/Library/CloudStorage/ProtonDrive-garret.murray@proton.me"
@@ -26,7 +29,6 @@ if [ $? -eq 0 ]; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Backup successfully uploaded to Proton Drive." \
         >> $LOG_FILE
 
-
     # Step 6: Remove local old backups (older than 7 days)
     # find $BACKUP_DIR -type f -regex ".*/joplin_backup_.*\.(jex|zip)" -mtime +1 -exec rm {} \;
 
@@ -35,16 +37,39 @@ if [ $? -eq 0 ]; then
     if [ $? -eq 0 ]; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') - Old local backups removed successfully from" \
             "joplin_export folder." >> $LOG_FILE
+        BODY="$(date '+%Y-%m-%d %H:%M:%S') - Old local backups removed successfully from joplin_export folder."
+
+        # Send email notification to self
+        EMAIL="To: $ADDRESS\r\nSubject: $SUBJECT\r\nFrom: $ADDRESS\r\n\r\n$BODY\r\n" 
+        echo $EMAIL
+
+
+        # Send the email
+        echo -e $EMAIL | msmtp $ADDRESS
+        printf "%d" $?
+
+
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - Failed to remove old local backups." >> $LOG_FILE
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - Failed to remove old local backups. Error code 1" \
+            >> $LOG_FILE
+        BODY="$(date '+%Y-%m-%d %H:%M:%S') - Failed to remove old local backups. Error code 1"
+
+        # Send email notification to self
+        EMAIL="To: $ADDRESS\r\nSubject: $SUBJECT\r\nFrom: $ADDRESS\r\n\r\n$BODY\r\n"
+        echo -e $EMAIL | msmtp $ADDRESS 
     fi
 
     # Step 7: Remove old backups from Proton Drive
     if [ -f $PROTON_BACKUP ]; then
-    # find $PROTON_DRIVE_DIR -type f -name "joplin_backup_*.zip" -mtime +7 -exec rm {} \;
+
+    # find -E $PROTON_DRIVE_DIR -type f -regex ".*/joplin_backup_.*\.zip" -mtime +7 -exec rm {} \;
+
+    # For debugging the line above:
     find -E $PROTON_DRIVE_DIR -type f -regex ".*/joplin_backup_.*\.zip"  -mmin +1 -exec rm {} \;
+
         if [ $? -eq 0 ]; then
-            echo "$(date '+%Y-%m-%d %H:%M:%S') - Old backups on Proton Drive removed successfully." \
+            echo \
+                "$(date '+%Y-%m-%d %H:%M:%S') - Old backups on Proton Drive removed successfully." \
                 >> $LOG_FILE
         else
             echo "$(date '+%Y-%m-%d %H:%M:%S') - Failed to remove old backups on Proton Drive." \
