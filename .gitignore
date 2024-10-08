@@ -1,6 +1,9 @@
 .DS_Store
-README.md
 default/
 joplin_export/
-.env
+**/*.env
 env_output.log
+*.hcl
+vault/
+plists/
+test.txt
