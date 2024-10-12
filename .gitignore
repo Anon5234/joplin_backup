@@ -6,4 +6,4 @@ env_output.log
 *.hcl
 vault/
 plists/
-test.txt
+joplin_backup.log
