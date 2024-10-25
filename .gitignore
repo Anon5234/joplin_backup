@@ -2,8 +2,4 @@
 default/
 joplin_export/
 **/*.env
-env_output.log
-*.hcl
-vault/
-plists/
-joplin_backup.log
+
